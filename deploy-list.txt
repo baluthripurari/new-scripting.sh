@@ -1,0 +1,4 @@
+# micro    release     artifact-dir      jar-name
+payment   26.02.100   payment-micro     payment-31-42-42-242-234.jar
+user      26.02.100   user-micro        user-11-22-33-44.jar
+cart      26.03.150   cart-micro        cart-55-66-77.jar
