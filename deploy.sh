@@ -2,17 +2,19 @@
 # Usage:
 # ./deploy.sh <micro> <release_branch> <artifact_dir> <artifact_jar>
 
-MICRO=$1
-RELEASE=$2
-ARTIFACT_DIR=$3
-ARTIFACT_JAR=$4
+set -e
+
+MICRO="$1"
+RELEASE="$2"
+ARTIFACT_DIR="$3"
+ARTIFACT_JAR="$4"
 
 BASE="/app"
-MICRO_DIR="$BASE/microservices/$MICRO"
+MICRO_DIR="$BASE/microservices"
 CONFIG="$BASE/config/$MICRO.properties"
 START_SCRIPT="$BASE/scripts/start.py"
 
-RUNTIME_JAR="$MICRO.jar"
+RUNTIME_JAR="${MICRO}.jar"
 
 URL="https://oneartifatory.company.com/articatory/b6ov_microservices/vzw/b6ov/release/${RELEASE}/${ARTIFACT_DIR}/${ARTIFACT_JAR}"
 
@@ -22,36 +24,36 @@ if [[ $# -ne 4 ]]; then
   exit 1
 fi
 
-if [[ ! -d "$MICRO_DIR" ]]; then
-  echo "Micro directory not found: $MICRO_DIR"
+if [[ ! -f "$CONFIG" ]]; then
+  echo "Config file not found: $CONFIG"
   exit 1
 fi
 
-if [[ ! -f "$CONFIG" ]]; then
-  echo "Config file not found: $CONFIG"
+if [[ ! -f "$MICRO_DIR/$RUNTIME_JAR" ]]; then
+  echo "Existing jar not found: $MICRO_DIR/$RUNTIME_JAR"
   exit 1
 fi
 
 echo "----------------------------------"
 echo "Deploying micro : $MICRO"
 echo "Release branch : $RELEASE"
-echo "Jar file       : $ARTIFACT_JAR"
+echo "Artifact jar   : $ARTIFACT_JAR"
+echo "Runtime jar    : $RUNTIME_JAR"
 echo "----------------------------------"
 
 # -------- stop old process --------
-PID=$(ps -ef | grep java | grep "$RUNTIME_JAR" | grep -v grep | awk '{print $2}')
+PID=$(pgrep -f "java.*$RUNTIME_JAR" || true)
 if [[ -n "$PID" ]]; then
   echo "Stopping old process PID=$PID"
   kill -9 "$PID"
   sleep 2
+else
+  echo "No running process found"
 fi
 
-# -------- download jar (AUTH via .netrc) --------
-echo "Downloading jar..."
-curl -f -L "$URL" -o "$MICRO_DIR/$RUNTIME_JAR" || {
-  echo "Jar download failed"
-  exit 1
-}
+# -------- download jar --------
+echo "Downloading new jar..."
+curl -f -L "$URL" -o "$MICRO_DIR/$RUNTIME_JAR"
 
 # -------- start micro --------
 echo "Starting micro..."
