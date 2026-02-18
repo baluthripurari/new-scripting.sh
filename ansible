@@ -1,0 +1,80 @@
+ansible-pycurl-install/
+│
+├── inventory/
+│   └── hosts.ini
+│
+├── playbooks/
+│   └── install.yml
+│
+└── roles/
+    └── common_install/
+        └── tasks/
+            └── main.yml
+
+
+
+playbooks/install.yml
+---
+- name: Install dependencies
+  hosts: all_servers
+  become: yes
+  become_method: pbrun
+  become_user: root
+
+  roles:
+    - common_install
+
+
+roles/common_install/tasks/main.yml
+
+---
+# Define proxy once
+- name: Define proxy variables
+  set_fact:
+    proxy_env:
+      no_proxy: 12.3.154.232
+      http_proxy: http://proxy.anc.com:80
+      https_proxy: http://proxy.anc.com:80
+      HTTP_PROXY: http://proxy.anc.com:80
+      HTTPS_PROXY: http://proxy.anc.com:80
+
+
+# STEP 1 - Install libcurl-devel
+- name: Install libcurl-devel
+  yum:
+    name: libcurl-devel
+    state: present
+  environment: "{{ proxy_env }}"
+
+- name: Validate libcurl-devel
+  command: rpm -q libcurl-devel
+  register: libcurl_check
+  failed_when: libcurl_check.rc != 0
+
+
+# STEP 2 - Install pycurl
+- name: Install pycurl
+  pip:
+    name: pycurl
+    executable: pip3
+    state: present
+  environment: "{{ proxy_env }}"
+
+- name: Validate pycurl
+  command: python3 -c "import pycurl"
+  register: pycurl_check
+  failed_when: pycurl_check.rc != 0
+
+
+# STEP 3 - Install lxml
+- name: Install lxml
+  pip:
+    name: lxml
+    executable: pip3
+    state: present
+  environment: "{{ proxy_env }}"
+
+- name: Validate lxml
+  command: python3 -c "import lxml"
+  register: lxml_check
+  failed_when: lxml_check.rc != 0
