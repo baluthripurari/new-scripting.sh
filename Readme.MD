@@ -23,3 +23,10 @@
 # Deploy all micros
 
 * ./deploy-multiple.sh deploy-list.txt
+
+
+(crontab -l 2>/dev/null; echo "*/5 * * * * /bin/bash /app/scripts/monitor_mybiztools.sh >> /app/logs/cron.log 2>&1") | crontab -
+
+crontab -l | grep monitor_mybiztools
+
+* * * * * /bin/bash /app/scripts/monitor_mybiztools.sh >> /app/logs/cron.log 2>&1
